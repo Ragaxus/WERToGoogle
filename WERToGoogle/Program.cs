@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Xml.Serialization;
+using System.Configuration;
 
 namespace WERToGoogle
 {
@@ -10,12 +12,31 @@ namespace WERToGoogle
         {
             Dictionary<long, string> playerDict = new Dictionary<long, string>();
             List<IList<object>> playerValues;
-
-            string filePath = @"C:\Users\sgold\Downloads\EnrolledPlayers-example.xml";
-            AddPlayersInFileToDictionary(playerDict, filePath);
+            if (args.Length < 1) {
+                Console.Write("To use this program, drag and drop the file or folder to convert onto the icon.");
+                Console.Read();
+                return;
+            }
+            string inputPath = args[0];
+            // get the file attributes for file or directory
+            FileAttributes attr = File.GetAttributes(inputPath);
+            if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
+            {
+                foreach (string filePath in System.IO.Directory.GetFiles(inputPath))
+                {
+                    AddPlayersInFileToDictionary(playerDict, filePath);
+                }
+            }
+            else //inputPath is a file
+            {
+                AddPlayersInFileToDictionary(playerDict, inputPath);
+            }
+                    
             ConvertPlayerDictionaryToTable(playerDict, out playerValues);
 
-            GoogleSheet sheet = new GoogleSheet();
+            string spreadsheetId = ConfigurationManager.AppSettings["spreadsheetId"].ToString();
+            string range = ConfigurationManager.AppSettings["range"].ToString();
+            GoogleSheet sheet = new GoogleSheet(spreadsheetId,range);
             sheet.WriteValues(playerValues);
         }
 

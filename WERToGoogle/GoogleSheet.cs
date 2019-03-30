@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using System.Reflection;
 
 namespace WERToGoogle
 {
@@ -17,27 +18,27 @@ namespace WERToGoogle
         static string[] Scopes = { SheetsService.Scope.Spreadsheets };
         static string ApplicationName = "WERToGoogle";
         SheetsService service;
-        String spreadsheetId = "1kKD6qzhSqu0Kx4MuPjYNImJuHJjmAcpFj-ixA2kM4Ws";
-        String range = "TestData!A2:C";
+        String spreadsheetId;
+        String range;
 
-        public GoogleSheet()
+        public GoogleSheet(string _spreadsheetId,string _range)
         {
             UserCredential credential;
-
-            using (var stream =
-                new FileStream("client_id.json", FileMode.Open, FileAccess.Read))
+            using (Stream resourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("WERToGoogle.client_id.json"))
             {
                 // The file token.json stores the user's access and refresh tokens, and is created
                 // automatically when the authorization flow completes for the first time.
                 string credPath = System.Environment.GetFolderPath(
                     System.Environment.SpecialFolder.Personal);
                 credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
-                    GoogleClientSecrets.Load(stream).Secrets,
+                    GoogleClientSecrets.Load(resourceStream).Secrets,
                     Scopes,
                     "user",
                     CancellationToken.None,
                     new FileDataStore(credPath, true)).Result;
                 Console.WriteLine("Credential file saved to: " + credPath);
+                spreadsheetId = _spreadsheetId;
+                range = _range;
             }
 
             // Create Google Sheets API service.
