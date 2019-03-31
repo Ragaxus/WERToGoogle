@@ -11,7 +11,7 @@ namespace WERToGoogle
         static void Main(string[] args)
         {
             Dictionary<long, string[]> playerDict = new Dictionary<long, string[]>();
-            List<IList<object>> playerValues;
+            List<IList<object>> playerValues = new List<IList<object>>();
             if (args.Length < 1) {
                 Console.Write("To use this program, drag and drop the file or folder to convert onto the icon.");
                 Console.Read();
@@ -24,15 +24,13 @@ namespace WERToGoogle
             {
                 foreach (string filePath in System.IO.Directory.GetFiles(inputPath))
                 {
-                    AddPlayersInFileToDictionary(playerDict, filePath);
+                    AddPlayersInFileToValuesBody(playerValues, filePath);
                 }
             }
             else //inputPath is a file
             {
-                AddPlayersInFileToDictionary(playerDict, inputPath);
-            }
-                    
-            ConvertPlayerDictionaryToTable(playerDict, out playerValues);
+                AddPlayersInFileToValuesBody(playerValues, inputPath);
+            }                    
 
             string spreadsheetId = ConfigurationManager.AppSettings["spreadsheetId"].ToString();
             string range = ConfigurationManager.AppSettings["range"].ToString();
@@ -40,16 +38,19 @@ namespace WERToGoogle
             sheet.WriteValues(playerValues);
         }
 
-        private static void AddPlayersInFileToDictionary(Dictionary<long, string[]> playerDict, string filePath)
+        private static void AddPlayersInFileToValuesBody(List<IList<object>> playerValues, string filePath)
         {
             XmlSerializer xmlSerializer = new XmlSerializer(typeof(@event));
             System.IO.StreamReader reader = new System.IO.StreamReader(filePath);
             @event @event = (@event)xmlSerializer.Deserialize(reader);
             foreach (var player in @event.teams)
-            { 
+            {
+                List<object> playerValuesEntry = new List<object>();
                 string playerName = player.name;
                 long playerDciNumber = player.players.player.dciNumber;
-                if (!playerDict.ContainsKey(playerDciNumber)) playerDict.Add(playerDciNumber, playerName.Split(", ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries));
+                playerValuesEntry.Add(playerDciNumber);
+                playerValuesEntry.AddRange(playerName.Split(", ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries));
+                playerValues.Add(playerValuesEntry);
             }
         }
 
